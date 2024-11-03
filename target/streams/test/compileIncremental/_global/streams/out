@@ -1,0 +1,123 @@
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] IncrementalCompile -----------[0m
+[0m[[0m[0mdebug[0m] [0m[0mIncrementalCompile.incrementalCompile[0m
+[0m[[0m[0mdebug[0m] [0m[0mprevious = Stamps for: 1 products, 1 sources, 6 libraries[0m
+[0m[[0m[0mdebug[0m] [0m[0mcurrent source = Set(${BASE}/src/test/scala/FuzzyLogicDSLTest.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating '${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_2.13/3.2.16/scalatest-core_2.13-3.2.16.jar' because ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_2.13/3.2.16/scalatest-core_2.13-3.2.16.jar (farm(33d64e90143d75f7)) != ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_2.13/3.2.19/scalatest-core_2.13-3.2.19.jar (farm(40a2220bd294f9b5))[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating '${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-flatspec_2.13/3.2.16/scalatest-flatspec_2.13-3.2.16.jar' because ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-flatspec_2.13/3.2.16/scalatest-flatspec_2.13-3.2.16.jar (farm(21cfe3f96b135ec1)) != ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-flatspec_2.13/3.2.19/scalatest-flatspec_2.13-3.2.19.jar (farm(ce68ba905b8daf37))[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating '${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-shouldmatchers_2.13/3.2.16/scalatest-shouldmatchers_2.13-3.2.16.jar' because ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-shouldmatchers_2.13/3.2.16/scalatest-shouldmatchers_2.13-3.2.16.jar (farm(f35c8a14be7601f0)) != ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-shouldmatchers_2.13/3.2.19/scalatest-shouldmatchers_2.13-3.2.19.jar (farm(71178d7dbc510af0))[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating '${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.16/scalatest-compatible-3.2.16.jar' because ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.16/scalatest-compatible-3.2.16.jar (farm(562b7a9261e3f234)) != ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.19/scalatest-compatible-3.2.19.jar (farm(3018ba651f71cdca))[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidating '${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.16/scalactic_2.13-3.2.16.jar' because ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.16/scalactic_2.13-3.2.16.jar (farm(f448d6bd465e5d74)) != ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.19/scalactic_2.13-3.2.19.jar (farm(c05cda731ce426ae))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> initialChanges = InitialChanges(Changes(added = Set(), removed = Set(), changed = Set(${BASE}/src/test/scala/FuzzyLogicDSLTest.scala), unmodified = ...),Set(${BASE}/target/scala-2.13/test-classes/FuzzyLogicDSLTest.class),Set(${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-shouldmatchers_2.13/3.2.16/scalatest-shouldmatchers_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.16/scalactic_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_2.13/3.2.16/scalatest-core_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-flatspec_2.13/3.2.16/scalatest-flatspec_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.16/scalatest-compatible-3.2.16.jar),API Changes: Set(NamesChange(ADD,ModifiedNames(changes = UsedName(ADD,[Default]))), NamesChange(FuzzyLogicDSL$,ModifiedNames(changes = UsedName(instanceScope,[Default]), UsedName(CreateInstance,[Default]), UsedName(Invoke,[Default]), UsedName(classInstances,[Default]), UsedName(ScopeInstance,[Default]))), NamesChange(XOR$,ModifiedNames(changes = UsedName(XOR,[Default]))), NamesChange(Input,ModifiedNames(changes = UsedName(Input,[Default]))), NamesChange(ADD$,ModifiedNames(changes = UsedName(ADD,[Default]))), NamesChange(FuzzyGateOperation,ModifiedNames(changes = UsedName(FuzzyGateOperation,[Default]))), NamesChange(MULT$,ModifiedNames(changes = UsedName(MULT,[Default]))), NamesChange(MULT,ModifiedNames(changes = UsedName(MULT,[Default]))), NamesChange(FuzzySetOperations$,ModifiedNames(changes = UsedName(elementMap,[Default]))), NamesChange(XOR,ModifiedNames(changes = UsedName(XOR,[Default]))), NamesChange(Input$,ModifiedNames(changes = UsedName(Input,[Default])))))[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe ADD has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(ADD,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) ADD: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) ADD.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [ADD][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe FuzzyLogicDSL$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(instanceScope,[Default]), UsedName(CreateInstance,[Default]), UsedName(Invoke,[Default]), UsedName(classInstances,[Default]), UsedName(ScopeInstance,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) FuzzyLogicDSL$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) FuzzyLogicDSL$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mNone of the modified names appears in source file of FuzzyLogicDSLTest. This dependency is not being considered for invalidation.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe XOR$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(XOR,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) XOR$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) XOR$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [XOR][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe Input has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(Input,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) Input: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) Input.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [Input][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe ADD$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(ADD,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) ADD$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) ADD$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [ADD][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe FuzzyGateOperation has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(FuzzyGateOperation,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) FuzzyGateOperation: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) FuzzyGateOperation.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [FuzzyGateOperation][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe MULT$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(MULT,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) MULT$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) MULT$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [MULT][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe MULT has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(MULT,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) MULT: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) MULT.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [MULT][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe FuzzySetOperations$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(elementMap,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) FuzzySetOperations$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) FuzzySetOperations$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mNone of the modified names appears in source file of FuzzyLogicDSLTest. This dependency is not being considered for invalidation.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe XOR has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(XOR,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) XOR: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) XOR.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [XOR][0m
+[0m[[0m[0mdebug[0m] [0m[0mThe Input$ has the following regular definitions changed:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	UsedName(Input,[Default]).[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0m[0mdebug[0m] [0m[0mFiles invalidated by inheriting from (external) Input$: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNow invalidating by inheritance (internally).[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting direct dependencies of all classes transitively invalidated by inheritance.[0m
+[0m[[0m[0mdebug[0m] [0m[0mGetting classes that directly depend on (external) Input$.[0m
+[0m[[0m[0mdebug[0m] [0m[0mThe following modified names cause invalidation of FuzzyLogicDSLTest: [Input][0m
+[0m[[0m[0mdebug[0m] [0m[0m[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial source changes:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	removed: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	added: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	modified: Set(${BASE}/src/test/scala/FuzzyLogicDSLTest.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidated products: Set(${BASE}/target/scala-2.13/test-classes/FuzzyLogicDSLTest.class)[0m
+[0m[[0m[0mdebug[0m] [0m[0mExternal API changes: API Changes: Set(NamesChange(ADD,ModifiedNames(changes = UsedName(ADD,[Default]))), NamesChange(FuzzyLogicDSL$,ModifiedNames(changes = UsedName(instanceScope,[Default]), UsedName(CreateInstance,[Default]), UsedName(Invoke,[Default]), UsedName(classInstances,[Default]), UsedName(ScopeInstance,[Default]))), NamesChange(XOR$,ModifiedNames(changes = UsedName(XOR,[Default]))), NamesChange(Input,ModifiedNames(changes = UsedName(Input,[Default]))), NamesChange(ADD$,ModifiedNames(changes = UsedName(ADD,[Default]))), NamesChange(FuzzyGateOperation,ModifiedNames(changes = UsedName(FuzzyGateOperation,[Default]))), NamesChange(MULT$,ModifiedNames(changes = UsedName(MULT,[Default]))), NamesChange(MULT,ModifiedNames(changes = UsedName(MULT,[Default]))), NamesChange(FuzzySetOperations$,ModifiedNames(changes = UsedName(elementMap,[Default]))), NamesChange(XOR,ModifiedNames(changes = UsedName(XOR,[Default]))), NamesChange(Input$,ModifiedNames(changes = UsedName(Input,[Default]))))[0m
+[0m[[0m[0mdebug[0m] [0m[0mModified binary dependencies: Set(${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-shouldmatchers_2.13/3.2.16/scalatest-shouldmatchers_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.13/3.2.16/scalactic_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-core_2.13/3.2.16/scalatest-core_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-flatspec_2.13/3.2.16/scalatest-flatspec_2.13-3.2.16.jar, ${CSR_CACHE}/https/repo1.maven.org/maven2/org/scalatest/scalatest-compatible/3.2.16/scalatest-compatible-3.2.16.jar)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial directly invalidated classes: Set(FuzzyLogicDSLTest)[0m
+[0m[[0m[0mdebug[0m] [0m[0mSources indirectly invalidated by:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	product: Set(${BASE}/src/test/scala/FuzzyLogicDSLTest.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	binary dep: Set(${BASE}/src/test/scala/FuzzyLogicDSLTest.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	external source: Set(FuzzyLogicDSLTest)[0m
+[0m[[0m[0mdebug[0m] [0m[0mall 1 sources are invalidated[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial set of included nodes: FuzzyLogicDSLTest[0m
+[0m[[0m[0mdebug[0m] [0m[0mRecompiling all sources: number of invalidated sources > 50.0 percent of all sources[0m
+[0m[[0m[0mdebug[0m] [0m[0mcompilation cycle 1[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to D:\CS474-HW2\target\scala-2.13\test-classes ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala2-sbt-bridge\2.13.14\scala2-sbt-bridge-2.13.14.jar.[0m
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] Running cached compiler 7b03864d for Scala compiler version 2.13.14[0m
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] The Scala compiler is invoked with:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	-classpath[0m
+[0m[[0m[0mdebug[0m] [0m[0m	D:\CS474-HW2\target\scala-2.13\test-classes;D:\CS474-HW2\target\scala-2.13\classes;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala-library\2.13.14\scala-library-2.13.14.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest_2.13\3.2.19\scalatest_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-core_2.13\3.2.19\scalatest-core_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-featurespec_2.13\3.2.19\scalatest-featurespec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-flatspec_2.13\3.2.19\scalatest-flatspec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-freespec_2.13\3.2.19\scalatest-freespec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-funsuite_2.13\3.2.19\scalatest-funsuite_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-funspec_2.13\3.2.19\scalatest-funspec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-propspec_2.13\3.2.19\scalatest-propspec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-refspec_2.13\3.2.19\scalatest-refspec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-wordspec_2.13\3.2.19\scalatest-wordspec_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-diagrams_2.13\3.2.19\scalatest-diagrams_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-matchers-core_2.13\3.2.19\scalatest-matchers-core_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-shouldmatchers_2.13\3.2.19\scalatest-shouldmatchers_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-mustmatchers_2.13\3.2.19\scalatest-mustmatchers_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala-reflect\2.13.14\scala-reflect-2.13.14.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalatest\scalatest-compatible\3.2.19\scalatest-compatible-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scalactic\scalactic_2.13\3.2.19\scalactic_2.13-3.2.19.jar;C:\Users\Holy\AppData\Local\Coursier\Cache\v1\https\repo1.maven.org\maven2\org\scala-lang\modules\scala-xml_2.13\2.1.0\scala-xml_2.13-2.1.0.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 4.5666897 s[0m
+[0m[[0m[0mdebug[0m] [0m[0mdone compiling[0m
