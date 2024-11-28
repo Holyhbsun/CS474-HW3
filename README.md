@@ -1,7 +1,7 @@
-# CS474-HW2
-CS474 HW2 fuzzy logic expansion
+# CS474-HW3
+CS474 HW3 fuzzy logic expansion with partial evaluation and conditional constructs.
 
-This project contains the new features required for CS474 HW2. The report.docx include the detail explanation of the implementation and the semantics of this DSL.
+This project contains the new features required for CS474 HW3, including partial evaluation, and conditional functions including GREATER_EQUAL, GREATER_EQUAL_SET, IFTRUE, and ELSERUN. The report.docx include the detail explanation of the implementation and the semantics of this DSL.
 
 ## Installation
 
@@ -17,8 +17,8 @@ To run this project, you'll need:
 1. **Clone the Repository**:
    Open a terminal and run the following command:
    ```bash
-   git clone https://github.com/Holyhbsun/CS474-HW2.git
-   cd CS474-HW2
+   git clone https://github.com/Holyhbsun/CS474-HW3.git
+   cd CS474-HW3
 
 2. **Build the Project**:
    You can use SBT to build the project. In the project directory, run:
@@ -38,18 +38,12 @@ To run this project, you'll need:
 ## Usage
 The following are the new features implemented in this project.
 ### Object Design
-- **Class**: Represents the blueprint of an object in the DSL.
-- **SuperClass**: Allows possible inheritance.
-- **Methods*: A list of Method instances defining the name, params used in the class, and the actual operations used in this method.
-- **Vars*: A list of ClassVar instances representing the variables used in the class.
-- **CreateNew*: Creates a new instance of a class.
-- **CreateInstance*: Create instances by getting the contents and the name of the clazz.
-- **Invoke*: Invoke a method defined within a class on a specific instance.
-- **ClassVar*: Represents a variable or attribute of a class.
-- **Vartype*: Defines the types of variables allowed in the DSL.
+- **GREATER_EQUAL**: Allow for fuzzy comparisons between numbers.
+- **GREATER_EQUAL_SET**: Allow for fuzzy comparisons between sets.
+- **Conditional Expressions**: Objects like IFTRUE, THENEXECUTE, and ELSERUN are evaluated by first evaluating the condition and then the appropriate branch.
 
 ### Evaluation
-- **evaluateMethod**: Finds the method by the method name and then evaluates its body within the given scope.
-- **evaluateMethodBody**: Matches the body of the method.
-- **evaluateGateOperation**: Evaluates fuzzy gate operations by operands recursively.
-- **evaluateSetOperation**: Evaluates fuzzy set operations by operands recursively, similar to evaluateGateOperation.
+- **Partial Evaluation**: Each FuzzyExpression implements the partialEvaluate method. It allows expressions to be partially evaluated based on the available variables defined in the environment.
+- **evaluateExpression**: It evaluates FuzzyExpression instances with partial evaluations. It could now handle conditional expressions in addition to the previous one.
+- **evaluateGateOperation**: Similar to previous one but supports partial evaluations.
+- **evaluateSetOperation**: Similar to previous one but supports partial evaluations.

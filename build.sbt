@@ -4,7 +4,7 @@ ThisBuild / scalaVersion := "2.13.14"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "CS474-HW2"
+    name := "CS474-HW3"
   )
 
 libraryDependencies ++= Seq(

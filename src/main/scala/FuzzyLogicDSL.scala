@@ -10,28 +10,179 @@ case class Class(
 case class ClassVar(name: String, varType: VarType) extends FuzzyClassOperation
 case class Method(name: String, params: List[Parameter], body: FuzzyOperation) extends FuzzyClassOperation
 case class Parameter(name: String, paramType: String)
-case class CreateNew(clazz: Class)
+case class CreateNew(clazz: Class, instanceName: String) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = this
+}
 
 sealed trait VarType
 case object StringType extends VarType
 case object DoubleType extends VarType
 case object SetType extends VarType
 
-sealed trait FuzzyValue
-case class FuzzyNumber(value: Double) extends FuzzyValue
-case class FuzzyString(value: String) extends FuzzyValue
-case class FuzzySetValue(set: FuzzySet) extends FuzzyValue
+sealed trait FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression
+}
 
-sealed trait FuzzyOperation
-
+sealed trait FuzzyOperation extends FuzzyExpression
 sealed trait FuzzyGateOperation extends FuzzyOperation
+sealed trait FuzzySetExpression extends FuzzyExpression
 
-case class Input(name: String, value: Option[Double] = None) extends FuzzyGateOperation
-case class ADD(a: FuzzyGateOperation, b: FuzzyGateOperation) extends FuzzyGateOperation
-case class MULT(a: FuzzyGateOperation, b: FuzzyGateOperation) extends FuzzyGateOperation
-case class XOR(a: FuzzyGateOperation, b: FuzzyGateOperation) extends FuzzyGateOperation
+sealed trait FuzzySetOperation extends FuzzySetExpression with FuzzyOperation
 
-case class FuzzyGate(name: String, operation: FuzzyGateOperation)
+sealed trait FuzzyValue extends FuzzyExpression
+
+case class FuzzyNumber(value: Double) extends FuzzyValue {
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case FuzzyNumber(v) => Math.abs(value - v) < 1e-6
+      case _ => false
+    }
+  }
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = this
+}
+
+case class FuzzyString(value: String) extends FuzzyValue {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = this
+}
+
+
+
+
+
+case class Input(name: String) extends FuzzyGateOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    env.get(name) match {
+      case Some(expr) if expr != this && !expr.isInstanceOf[Input] => expr.partialEvaluate(env)
+      case Some(expr) => expr
+      case None => this
+    }
+  }
+}
+case class ADD(a: FuzzyExpression, b: FuzzyExpression) extends FuzzyGateOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = a.partialEvaluate(env)
+    val right = b.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzyNumber(v1), FuzzyNumber(v2)) => FuzzyNumber(math.min(v1 + v2, 1.0))
+      case _ => ADD(left, right)
+    }
+  }
+}
+
+case class MULT(a: FuzzyExpression, b: FuzzyExpression) extends FuzzyGateOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = a.partialEvaluate(env)
+    val right = b.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+        FuzzyNumber(v1 * v2)
+      case _ => MULT(left, right)
+    }
+  }
+}
+
+case class XOR(a: FuzzyExpression, b: FuzzyExpression) extends FuzzyGateOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = a.partialEvaluate(env)
+    val right = b.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzyNumber(v1), FuzzyNumber(v2)) => FuzzyNumber(math.abs(v1 - v2))
+      case _ => XOR(left, right)
+    }
+  }
+}
+
+case class IFTRUE(condition: FuzzyExpression, thenExec: THENEXECUTE, elseRun: ELSERUN) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val condEvaluated = condition.partialEvaluate(env)
+    val thenEvaluated = thenExec.partialEvaluate(env).asInstanceOf[THENEXECUTE]
+    val elseEvaluated = elseRun.partialEvaluate(env).asInstanceOf[ELSERUN]
+    IFTRUE(condEvaluated, thenEvaluated, elseEvaluated)
+  }
+}
+
+case class GREATER_EQUAL(a: FuzzyExpression, b: FuzzyExpression) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = a.partialEvaluate(env)
+    val right = b.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzyNumber(v1), FuzzyNumber(v2)) => FuzzyBoolean(v1 >= v2)
+      case _ => GREATER_EQUAL(left, right)
+    }
+  }
+}
+
+case class THENEXECUTE(expr: FuzzyExpression) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedExpr = expr.partialEvaluate(env)
+    THENEXECUTE(evaluatedExpr)
+  }
+}
+
+case class ELSERUN(expr: FuzzyExpression) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedExpr = expr.partialEvaluate(env)
+    ELSERUN(evaluatedExpr)
+  }
+}
+
+case class GREATER_EQUAL_SET(a: FuzzySetExpression, b: FuzzySetExpression) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = a.partialEvaluate(env)
+    val right = b.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(setA), FuzzySetValue(setB)) =>
+        val cardinalityA = setA.elements.map(_.value).sum
+        val cardinalityB = setB.elements.map(_.value).sum
+        FuzzyBoolean(cardinalityA >= cardinalityB)
+      case _ =>
+        GREATER_EQUAL_SET(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+
+case class FuzzyBoolean(value: Boolean) extends FuzzyValue {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = this
+}
+
+case class Assign(variable: Variable, expr: FuzzyExpression) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedExpr = expr.partialEvaluate(env)
+    Assign(variable, evaluatedExpr)
+  }
+}
+
+case class Variable(name: String) extends FuzzyOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    env.getOrElse(name, this)
+  }
+}
+
+case class InvokeMethod(instance: FuzzyExpression, methodName: String, args: List[(String, FuzzyExpression)]) extends FuzzyExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedInstance = instance.partialEvaluate(env)
+    val evaluatedArgs = args.map { case (name, expr) => (name, expr.partialEvaluate(env)) }.toMap
+    evaluatedInstance match {
+      case CreateNew(clazz, instanceName) =>
+        val methodOption = clazz.methods.find(_.name == methodName)
+        methodOption match {
+          case Some(method) =>
+            val methodEnv = evaluatedArgs ++ env
+            val instanceVars = clazz.vars.map { classVar =>
+              val varName = s"${instanceName}.${classVar.name}"
+              (classVar.name, env.getOrElse(varName, Variable(varName)))
+            }.toMap
+            val methodEnvWithInstance = methodEnv ++ instanceVars
+            val evaluatedMethodBody = method.body.partialEvaluate(methodEnvWithInstance)
+            evaluatedMethodBody
+          case None => throw new IllegalArgumentException(s"Method $methodName not found in class ${clazz.name}")
+        }
+      case _ => throw new IllegalArgumentException(s"Cannot invoke method on non-class instance: $evaluatedInstance")
+    }
+  }
+}
+
+case class FuzzyGate(name: String, operation: FuzzyExpression)
 
 object FuzzyOperations {
   def round(value: Double, precision: Int = 2): Double = {
@@ -45,17 +196,163 @@ object FuzzyOperations {
 }
 
 object FuzzyGateEvaluator {
-  def evaluate(gate: FuzzyGate, inputs: Map[String, Double]): Double = {
-    def evalOperation(op: FuzzyGateOperation): Double = op match {
-      case Input(name, _) => inputs.getOrElse(name, throw new IllegalArgumentException(s"Input $name is not defined in the scope"))
-      case ADD(a, b) => FuzzyOperations.add(evalOperation(a), evalOperation(b))
-      case MULT(a, b) => FuzzyOperations.mult(evalOperation(a), evalOperation(b))
-      case XOR(a, b) => FuzzyOperations.xor(evalOperation(a), evalOperation(b))
+  def evaluateExpression(expr: FuzzyExpression, env: Map[String, FuzzyExpression]): (FuzzyExpression, Map[String, FuzzyExpression]) = expr match {
+    case FuzzyNumber(value) => (FuzzyNumber(value), env)
+    case Variable(name) =>
+      val parts = name.split("\\.")
+      if (parts.length == 2) {
+        val instanceName = parts(0)
+        val variableName = parts(1)
+        val fullVarName = s"$instanceName.$variableName"
+        val value = env.getOrElse(fullVarName, Variable(fullVarName))
+        (value, env)
+      } else {
+        val value = env.getOrElse(name, Variable(name))
+        (value, env)
+      }
+    case ADD(a, b) =>
+      val (left, env1) = evaluateExpression(a, env)
+      val (right, env2) = evaluateExpression(b, env1)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          (FuzzyNumber(FuzzyOperations.add(v1, v2)), env2)
+        case _ =>
+          (ADD(left, right), env2)
+      }
+
+    case MULT(a, b) =>
+      val (left, env1) = evaluateExpression(a, env)
+      val (right, env2) = evaluateExpression(b, env1)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          (FuzzyNumber(FuzzyOperations.mult(v1, v2)), env2)
+        case _ =>
+          (MULT(left, right), env2)
+      }
+
+    case XOR(a, b) =>
+      val (left, env1) = evaluateExpression(a, env)
+      val (right, env2) = evaluateExpression(b, env1)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          (FuzzyNumber(FuzzyOperations.xor(v1, v2)), env2)
+        case _ =>
+          (XOR(left, right), env2)
+      }
+    case GREATER_EQUAL(a, b) =>
+      val (left, env1) = evaluateExpression(a, env)
+      val (right, env2) = evaluateExpression(b, env1)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) => (FuzzyBoolean(v1 >= v2), env2)
+        case _ => (GREATER_EQUAL(left, right), env2)
+      }
+    case GREATER_EQUAL_SET(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(setA), FuzzySetValue(setB)) =>
+          val cardinalityA = setA.elements.map(_.value).sum
+          val cardinalityB = setB.elements.map(_.value).sum
+          (FuzzyBoolean(cardinalityA >= cardinalityB), env2)
+        case _ =>
+          (GREATER_EQUAL_SET(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+    case IFTRUE(condition, thenExec, elseRun) =>
+      val (condResult, env1) = evaluateExpression(condition, env)
+      condResult match {
+        case FuzzyBoolean(true) =>
+          evaluateExpression(thenExec.expr, env1)
+        case FuzzyBoolean(false) =>
+          evaluateExpression(elseRun.expr, env1)
+        case _ =>
+          (IFTRUE(condResult, thenExec, elseRun), env1)
+      }
+    case Assign(variable, expr) =>
+      val (evaluatedExpr, env1) = evaluateExpression(expr, env)
+      val updatedEnv = env1 + (variable.name -> evaluatedExpr)
+      (evaluatedExpr, updatedEnv)
+    case THENEXECUTE(expr) =>
+      evaluateExpression(expr, env)
+    case ELSERUN(expr) =>
+      evaluateExpression(expr, env)
+    case InvokeMethod(instanceExpr, methodName, args) =>
+      val (evaluatedInstance, env1) = evaluateExpression(instanceExpr, env)
+      evaluatedInstance match {
+        case instance: CreateNew =>
+          val instanceName = instance.instanceName
+          // Evaluate arguments
+          val (evaluatedArgs, env2) = args.foldLeft((List.empty[(String, FuzzyExpression)], env1)) {
+            case ((argList, envAcc), (argName, argExpr)) =>
+              val (evaluatedArg, envNext) = evaluateExpression(argExpr, envAcc)
+              (argList :+ (argName, evaluatedArg), envNext)
+          }
+          val method = findMethod(instance.clazz, methodName).getOrElse(
+            throw new IllegalArgumentException(s"Method $methodName not found in class ${instance.clazz.name}")
+          )
+          val methodEnv = env2 ++ evaluatedArgs.toMap
+          val instanceVars = instance.clazz.vars.map { classVar =>
+            val varName = s"${instanceName}.${classVar.name}"
+            (classVar.name, env2.getOrElse(varName, Variable(varName)))
+          }.toMap
+          val methodEnvWithInstance = methodEnv ++ instanceVars
+          val (result, methodEnvUpdated) = evaluateExpression(method.body, methodEnvWithInstance)
+          val updatedInstanceVars = methodEnvUpdated.collect {
+            case (varName, value) if instanceVars.contains(varName) =>
+              val instanceVarName = s"${instanceName}.${varName}"
+              (instanceVarName, value)
+          }
+          val updatedEnv = env2 ++ updatedInstanceVars
+          (result, updatedEnv)
+        case _ =>
+          throw new IllegalArgumentException(s"Cannot invoke method on non-class instance: $evaluatedInstance")
+      }
+    case setExpr: FuzzySetExpression =>
+      evaluateSetExpression(setExpr, env)
+    case Input(name) =>
+      env.get(name) match {
+        case Some(value) => (value, env)
+        case None => (Input(name), env)
+      }
+    case _ => (expr, env)
+  }
+
+  def evaluate(gate: FuzzyGate, inputs: Map[String, FuzzyExpression]): FuzzyExpression = {
+    def evalOperation(op: FuzzyExpression): FuzzyExpression = op match {
+      case Input(name) =>
+        inputs.getOrElse(name, Input(name))
+      case FuzzyNumber(value) =>
+        FuzzyNumber(value)
+      case ADD(a, b) =>
+        val left = evalOperation(a)
+        val right = evalOperation(b)
+        (left, right) match {
+          case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+            FuzzyNumber(FuzzyOperations.add(v1, v2))
+          case _ => ADD(left, right)
+        }
+      case MULT(a, b) =>
+        val left = evalOperation(a)
+        val right = evalOperation(b)
+        (left, right) match {
+          case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+            FuzzyNumber(FuzzyOperations.mult(v1, v2))
+          case _ => MULT(left, right)
+        }
+      case XOR(a, b) =>
+        val left = evalOperation(a)
+        val right = evalOperation(b)
+        (left, right) match {
+          case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+            FuzzyNumber(FuzzyOperations.xor(v1, v2))
+          case _ => XOR(left, right)
+        }
+      // Add any additional cases if necessary
     }
+
     evalOperation(gate.operation)
   }
 
-  def evaluateMethod(instance: CreateNew, methodName: String, args: Map[String, FuzzyValue]): FuzzyValue = {
+  def evaluateMethod(instance: CreateNew, methodName: String, args: Map[String, FuzzyExpression]): FuzzyExpression = {
     val clazz = instance.clazz
     val method = findMethod(clazz, methodName).getOrElse(throw new IllegalArgumentException(s"Method $methodName not found in class ${clazz.name}"))
     val scope = args
@@ -63,76 +360,234 @@ object FuzzyGateEvaluator {
   }
 
   private def findMethod(clazz: Class, methodName: String): Option[Method] = {
-    clazz.methods.find(_.name == methodName).orElse(clazz.superClass.flatMap(findMethod(_, methodName)))
-  }
-
-  private def evaluateMethodBody(body: FuzzyOperation, scope: Map[String, FuzzyValue]): FuzzyValue = {
-    body match {
-      case op: FuzzyGateOperation => FuzzyNumber(evaluateGateOperation(op, scope))
-      case op: FuzzySetOperation => FuzzySetValue(evaluateSetOperation(op, scope))
-      case AlphaCut(setOp, alphaOp) =>
-        val setA = evaluateSetOperation(setOp, scope)
-        val alphaValue = evaluateGateOperation(alphaOp, scope)
-        val elements = FuzzySetOperations.alphaCut(setA, alphaValue)
-        FuzzyString(elements.mkString(","))
+    clazz.methods.find(_.name == methodName).orElse {
+      clazz.superClass.flatMap(findMethod(_, methodName))
     }
   }
 
-  private def evaluateGateOperation(op: FuzzyGateOperation, scope: Map[String, FuzzyValue]): Double = op match {
-    case Input(name, _) =>
-      scope.get(name) match {
-        case Some(FuzzyNumber(value)) => value
-        case _ => throw new IllegalArgumentException(s"Input $name is not defined as a number in the scope")
-      }
-    case ADD(a, b) => FuzzyOperations.add(evaluateGateOperation(a, scope), evaluateGateOperation(b, scope))
-    case MULT(a, b) => FuzzyOperations.mult(evaluateGateOperation(a, scope), evaluateGateOperation(b, scope))
-    case XOR(a, b) => FuzzyOperations.xor(evaluateGateOperation(a, scope), evaluateGateOperation(b, scope))
+  private def evaluateMethodBody(body: FuzzyExpression, scope: Map[String, FuzzyExpression]): FuzzyExpression = {
+    body match {
+      case op: FuzzyGateOperation =>
+        evaluateGateOperation(op, scope)
+      case _ =>
+        throw new IllegalArgumentException("Unsupported operation in method body")
+    }
   }
 
-  private def evaluateSetOperation(op: FuzzySetOperation, scope: Map[String, FuzzyValue]): FuzzySet = {
-    op match {
-      case SetInput(name) =>
-        scope.get(name) match {
-          case Some(FuzzySetValue(set)) => set
-          case _ => throw new IllegalArgumentException(s"Set $name is not defined as a set in the scope")
-        }
-      case Union(a, b) =>
-        val setA = evaluateSetOperation(a, scope)
-        val setB = evaluateSetOperation(b, scope)
-        FuzzySetOperations.union(setA, setB)
-      case Intersection(a, b) =>
-        val setA = evaluateSetOperation(a, scope)
-        val setB = evaluateSetOperation(b, scope)
-        FuzzySetOperations.intersection(setA, setB)
-      case Complement(a) =>
-        val setA = evaluateSetOperation(a, scope)
-        FuzzySetOperations.complement(setA)
-      case AddSets(a, b) =>
-        val setA = evaluateSetOperation(a, scope)
-        val setB = evaluateSetOperation(b, scope)
-        FuzzySetOperations.add(setA, setB)
-      case MultSets(a, b) =>
-        val setA = evaluateSetOperation(a, scope)
-        val setB = evaluateSetOperation(b, scope)
-        FuzzySetOperations.mult(setA, setB)
-      case XorSets(a, b) =>
-        val setA = evaluateSetOperation(a, scope)
-        val setB = evaluateSetOperation(b, scope)
-        FuzzySetOperations.xor(setA, setB)
+  private def evaluateGateOperation(op: FuzzyExpression, scope: Map[String, FuzzyExpression]): FuzzyExpression = op match {
+    case Input(name) =>
+      scope.getOrElse(name, Input(name))
+    case FuzzyNumber(value) =>
+      FuzzyNumber(value)
+    case ADD(a, b) =>
+      val left = evaluateGateOperation(a, scope)
+      val right = evaluateGateOperation(b, scope)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          FuzzyNumber(FuzzyOperations.add(v1, v2))
+        case _ => ADD(left, right)
+      }
+    case MULT(a, b) =>
+      val left = evaluateGateOperation(a, scope)
+      val right = evaluateGateOperation(b, scope)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          FuzzyNumber(FuzzyOperations.mult(v1, v2))
+        case _ => MULT(left, right)
+      }
+    case XOR(a, b) =>
+      val left = evaluateGateOperation(a, scope)
+      val right = evaluateGateOperation(b, scope)
+      (left, right) match {
+        case (FuzzyNumber(v1), FuzzyNumber(v2)) =>
+          FuzzyNumber(FuzzyOperations.xor(v1, v2))
+        case _ => XOR(left, right)
+      }
+  }
+
+
+  def evaluateSetExpression(expr: FuzzySetExpression, env: Map[String, FuzzyExpression]): (FuzzyExpression, Map[String, FuzzyExpression]) = expr match {
+    case FuzzySetValue(set) =>
+      (FuzzySetValue(set), env)
+
+    case SetInput(name) =>
+      env.get(name) match {
+        case Some(setExpr: FuzzySetExpression) => evaluateSetExpression(setExpr, env)
+        case _ => (SetInput(name), env)
+      }
+
+    case AddSets(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+          (FuzzySetValue(FuzzySetOperations.add(s1, s2)), env2)
+        case _ =>
+          (AddSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+
+    case MultSets(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+          (FuzzySetValue(FuzzySetOperations.mult(s1, s2)), env2)
+        case _ =>
+          (MultSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+
+    case XorSets(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+          (FuzzySetValue(FuzzySetOperations.xor(s1, s2)), env2)
+        case _ =>
+          (XorSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+
+    case Union(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+          (FuzzySetValue(FuzzySetOperations.union(s1, s2)), env2)
+        case _ =>
+          (Union(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+
+    case Intersection(a, b) =>
+      val (left, env1) = evaluateSetExpression(a, env)
+      val (right, env2) = evaluateSetExpression(b, env1)
+      (left, right) match {
+        case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+          (FuzzySetValue(FuzzySetOperations.intersection(s1, s2)), env2)
+        case _ =>
+          (Intersection(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression]), env2)
+      }
+
+    case Complement(a) =>
+      val (evaluatedSet, env1) = evaluateSetExpression(a, env)
+      evaluatedSet match {
+        case FuzzySetValue(s1) =>
+          (FuzzySetValue(FuzzySetOperations.complement(s1)), env1)
+        case _ =>
+          (Complement(evaluatedSet.asInstanceOf[FuzzySetExpression]), env1)
+      }
+
+
+    case AlphaCut(a, alphaExpr) =>
+      val (evaluatedSet, env1) = evaluateSetExpression(a, env)
+      val (evaluatedAlpha, env2) = evaluateExpression(alphaExpr, env1)
+      (evaluatedSet, evaluatedAlpha) match {
+        case (FuzzySetValue(s1), FuzzyNumber(alphaValue)) =>
+          val elements = FuzzySetOperations.alphaCut(s1, alphaValue)
+          val resultSet = FuzzySet(s"${s1.name}_ALPHACUT_$alphaValue", elements.map(Element(_, alphaValue)))
+          (FuzzySetValue(resultSet), env2)
+        case _ =>
+          (AlphaCut(evaluatedSet.asInstanceOf[FuzzySetExpression], evaluatedAlpha), env2)
+      }
+  }
+
+}
+
+case class FuzzySetValue(set: FuzzySet) extends FuzzyValue with FuzzySetExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = this
+}
+
+case class SetInput(name: String) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    env.get(name) match {
+      case Some(setExpr: FuzzySetExpression) => setExpr.partialEvaluate(env)
+      case _ => this
+    }
+  }
+}
+case class AddSets(setA: FuzzySetExpression, setB: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = setA.partialEvaluate(env)
+    val right = setB.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+        FuzzySetValue(FuzzySetOperations.add(s1, s2))
+      case _ =>
+        AddSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+case class MultSets(setA: FuzzySetExpression, setB: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = setA.partialEvaluate(env)
+    val right = setB.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+        FuzzySetValue(FuzzySetOperations.mult(s1, s2))
+      case _ =>
+        MultSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+case class XorSets(setA: FuzzySetExpression, setB: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = setA.partialEvaluate(env)
+    val right = setB.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+        FuzzySetValue(FuzzySetOperations.xor(s1, s2))
+      case _ =>
+        XorSets(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+case class AlphaCut(setA: FuzzySetExpression, alpha: FuzzyExpression) extends FuzzySetExpression {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedSet = setA.partialEvaluate(env)
+    val evaluatedAlpha = alpha.partialEvaluate(env)
+    (evaluatedSet, evaluatedAlpha) match {
+      case (FuzzySetValue(s1), FuzzyNumber(a)) =>
+        val elements = FuzzySetOperations.alphaCut(s1, a)
+        FuzzySetValue(FuzzySet(s"${s1.name}_ALPHACUT_$a", elements.map(Element(_, a))))
+      case _ =>
+        AlphaCut(evaluatedSet.asInstanceOf[FuzzySetExpression], evaluatedAlpha)
     }
   }
 }
 
-sealed trait FuzzySetOperation extends FuzzyOperation
-
-case class SetInput(name: String) extends FuzzySetOperation
-case class AddSets(setA: FuzzySetOperation, setB: FuzzySetOperation) extends FuzzySetOperation
-case class MultSets(setA: FuzzySetOperation, setB: FuzzySetOperation) extends FuzzySetOperation
-case class XorSets(setA: FuzzySetOperation, setB: FuzzySetOperation) extends FuzzySetOperation
-case class AlphaCut(setA: FuzzySetOperation, alpha: FuzzyGateOperation) extends FuzzyOperation
-case class Union(setA: FuzzySetOperation, setB: FuzzySetOperation) extends FuzzySetOperation
-case class Intersection(setA: FuzzySetOperation, setB: FuzzySetOperation) extends FuzzySetOperation
-case class Complement(setA: FuzzySetOperation) extends FuzzySetOperation
+case class Union(setA: FuzzySetExpression, setB: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = setA.partialEvaluate(env)
+    val right = setB.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+        FuzzySetValue(FuzzySetOperations.union(s1, s2))
+      case _ =>
+        Union(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+case class Intersection(setA: FuzzySetExpression, setB: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val left = setA.partialEvaluate(env)
+    val right = setB.partialEvaluate(env)
+    (left, right) match {
+      case (FuzzySetValue(s1), FuzzySetValue(s2)) =>
+        FuzzySetValue(FuzzySetOperations.intersection(s1, s2))
+      case _ =>
+        Intersection(left.asInstanceOf[FuzzySetExpression], right.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
+case class Complement(setA: FuzzySetExpression) extends FuzzySetOperation {
+  def partialEvaluate(env: Map[String, FuzzyExpression]): FuzzyExpression = {
+    val evaluatedSet = setA.partialEvaluate(env)
+    evaluatedSet match {
+      case FuzzySetValue(s1) =>
+        FuzzySetValue(FuzzySetOperations.complement(s1))
+      case _ =>
+        Complement(evaluatedSet.asInstanceOf[FuzzySetExpression])
+    }
+  }
+}
 
 // Set Operations
 case class Element(name: String, value: Double)
@@ -246,26 +701,27 @@ case class FuzzySetClass(
 
 case class FuzzySetVar(name: String, varType: VarType, elements: List[Element]) extends FuzzyClassOperation
 
+
 object FuzzyLogicDSL {
   var gates: Map[String, FuzzyGate] = Map()
-  var inputScope: Map[String, Map[String, Double]] = Map()
+  var inputScope: Map[String, Map[String, FuzzyExpression]] = Map()
+  var instanceScope: Map[String, Map[String, FuzzyExpression]] = Map()
   var classInstances: Map[String, CreateNew] = Map()
-  var instanceScope: Map[String, Map[String, FuzzyValue]] = Map() // Scope for class instances
 
-  def Assign(gate: FuzzyGate): Unit = {
+  def AssignGate(gate: FuzzyGate): Unit = {
     gates += (gate.name -> gate)
   }
 
-  def AssignInput(gateName: String, input: Input, value: Double): Unit = {
+  def AssignInput(gateName: String, input: Input, value: FuzzyExpression): Unit = {
     val currentScope = inputScope.getOrElse(gateName, Map())
     inputScope += (gateName -> (currentScope + (input.name -> value)))
   }
 
   def Scope(gate: FuzzyGate, inputAssignment: (Input, Double)): Unit = {
-    AssignInput(gate.name, inputAssignment._1, inputAssignment._2)
+    AssignInput(gate.name, inputAssignment._1, FuzzyNumber(inputAssignment._2))
   }
 
-  def ScopeInstance(instance: CreateNew, variable: String, value: FuzzyValue): Unit = {
+  def ScopeInstance(instance: CreateNew, variable: String, value: FuzzyExpression): Unit = {
     val instanceName = instance.clazz.name
     val currentScope = instanceScope.getOrElse(instanceName, Map())
     instanceScope += (instanceName -> (currentScope + (variable -> value)))
@@ -275,66 +731,60 @@ object FuzzyLogicDSL {
     val gate = gates.getOrElse(gateName, throw new IllegalArgumentException(s"Gate $gateName not found"))
     val inputValues = inputScope.getOrElse(gateName, throw new IllegalArgumentException(s"Input values for $gateName not found"))
     val result = FuzzyGateEvaluator.evaluate(gate, inputValues)
-    result == expectedResult
+    result match {
+      case FuzzyNumber(value) => value == expectedResult
+      case _ => false
+    }
   }
 
-  def CreateInstance(clazz: Class): CreateNew = {
-    val instance = CreateNew(clazz)
-    classInstances += (clazz.name -> instance)
+  def CreateInstance(clazz: Class, instanceName: String): CreateNew = {
+    val instance = CreateNew(clazz, instanceName)
+    classInstances += (instanceName -> instance)
     instance
   }
 
-  def Invoke(instance: CreateNew, methodName: String, argNames: List[String]): FuzzyValue = {
-    val scope = instanceScope.getOrElse(instance.clazz.name, Map())
-
-    val args: Map[String, FuzzyValue] = argNames.map { argName =>
-      scope.get(argName) match {
-        case Some(value) => argName -> value
-        case None => throw new IllegalArgumentException(s"Input $argName is not defined in the scope for instance ${instance.clazz.name}")
-      }
-    }.toMap
-
-    FuzzyGateEvaluator.evaluateMethod(instance, methodName, args)
+  def Invoke(instance: CreateNew, methodName: String, argNames: List[String]): FuzzyExpression = {
+    val args: List[(String, FuzzyExpression)] = argNames.map { argName =>
+      (argName, Input(argName))
+    }
+    InvokeMethod(instance, methodName, args)
   }
 }
 
 object Main extends App {
-  import FuzzyLogicDSL._
-  val baseSetClass = Class(
-    name = "BaseSet",
-    methods = List(
-      Method(
-        name = "unionMethod",
-        params = List(Parameter("setA", "set"), Parameter("setB", "set")),
-        body = Union(SetInput("setA"), SetInput("setB"))
-      ),
-      Method(
-        name = "intersectionMethod",
-        params = List(Parameter("setA", "set"), Parameter("setB", "set")),
-        body = Intersection(SetInput("setA"), SetInput("setB"))
-      )
-    ),
-    vars = List(ClassVar("v1", SetType))
+  val setA = FuzzySet("SetA", List(Element("x", 0.5), Element("y", 0.7)))
+  val setB = FuzzySet("SetB", List(Element("x", 0.6), Element("y", 0.4)))
+
+  val env = Map(
+    "A" -> FuzzySetValue(setA),
+    "B" -> FuzzySetValue(setB)
   )
 
-  // Create an instance of the base set class
-  val baseSetInstance = CreateInstance(baseSetClass)
+  // Create assignment using GREATER_EQUAL_SET and IFTRUE
+  val assignment = IFTRUE(
+    GREATER_EQUAL_SET(SetInput("A"), SetInput("B")),
+    THENEXECUTE(
+      Assign(Variable("resultSet"), Union(SetInput("A"), SetInput("B")))
+    ),
+    ELSERUN(
+      Assign(Variable("resultSet"), Intersection(SetInput("A"), SetInput("B")))
+    )
+  )
 
-  // Using ScopeInstance for the instance variables
-  ScopeInstance(baseSetInstance, "setA", FuzzySetValue(FuzzySet("setA", List(Element("x1", 0.5), Element("x2", 0.7)))))
-  ScopeInstance(baseSetInstance, "setB", FuzzySetValue(FuzzySet("setB", List(Element("x1", 0.3), Element("x3", 0.8)))))
+  // Evaluate the assignment
+  val (result, finalEnv) = FuzzyGateEvaluator.evaluateExpression(assignment, env)
 
-  // Invoke unionMethod on the baseSetInstance
-  val unionResult = Invoke(baseSetInstance, methodName = "unionMethod", argNames = List("setA", "setB"))
-  unionResult match {
-    case FuzzySetValue(set) => println(s"Result of invoking unionMethod on BaseSet instance: ${set.elements}")
-    case _ => println("Unexpected result type")
-  }
-
-  // Invoke intersectionMethod on the baseSetInstance
-  val intersectionResult = Invoke(baseSetInstance, methodName = "intersectionMethod", argNames = List("setA", "setB"))
-  intersectionResult match {
-    case FuzzySetValue(set) => println(s"Result of invoking intersectionMethod on BaseSet instance: ${set.elements}")
-    case _ => println("Unexpected result type")
+  // Get the resultSet from the environment
+  finalEnv.get("resultSet") match {
+    case Some(fsv: FuzzySetValue) =>
+      val resultSet = fsv.set
+      println(s"Resulting Set: ${resultSet.name}")
+      resultSet.elements.foreach { e =>
+        println(s"${e.name}: ${e.value}")
+      }
+    case Some(value) =>
+      println(s"resultSet is not a FuzzySetValue, it is: $value")
+    case None =>
+      println("resultSet not found in finalEnv")
   }
 }

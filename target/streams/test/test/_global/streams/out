@@ -1,27 +1,28 @@
-[0m[[0m[0mdebug[0m] [0m[0mRunning TaskDef(FuzzyLogicDSLTest, org.scalatest.tools.Framework$$anon$1@d995e4d, false, [SuiteSelector])[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning TaskDef(FuzzyLogicDSLTest, org.scalatest.tools.Framework$$anon$1@7b248f64, false, [SuiteSelector])[0m
 [0m[[0m[0minfo[0m] [0m[0m[32mFuzzyLogicDSLTest:[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32mFuzzyLogicDSL[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate ADD operation in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate MULT operation in a class method[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate XOR operation in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate composite gate operation in a nested class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate inherited method in derived class[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly handle FuzzyString parameters[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32mFuzzySet operations in class methods[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should partially evaluate an expression with undefined variables[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should fully evaluate expressions when all variables are defined[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should partially and fully evaluate a class method[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly handle class inheritance and method overriding[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate GREATER_EQUAL, IFTRUE, THENEXECUTE, and ELSERUN with complex expressions[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32mFuzzySet operations for evaluations[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should partially and fully evaluate set operations[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate ADD operation on fuzzy sets in a class method[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate MULT operation on fuzzy sets in a class method[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate XOR operation on fuzzy sets in a class method[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate complement operation on a fuzzy set in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate alpha-cut operation on a fuzzy set in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate unionMethod in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate intersectionMethod in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate complementMethod in a class method[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate nested set operations in a class method[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate union operation on fuzzy sets in a class method[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate intersection operation on fuzzy sets in a class method[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate inherited fuzzy set method in derived class[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[36mRun completed in 457 milliseconds.[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[36mTotal number of tests run: 16[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly evaluate GREATER_EQUAL_SET, IFTRUE, THENEXECUTE, and ELSERUN with set operations[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should correctly handle class inheritance with set operations and test all set operations[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[36mRun completed in 479 milliseconds.[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[36mTotal number of tests run: 17[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[36mSuites: completed 1, aborted 0[0m[0m
-[0m[[0m[0minfo[0m] [0m[0m[36mTests: succeeded 16, failed 0, canceled 0, ignored 0, pending 0[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[36mTests: succeeded 17, failed 0, canceled 0, ignored 0, pending 0[0m[0m
 [0m[[0m[0minfo[0m] [0m[0m[32mAll tests passed.[0m[0m
 [0m[[0m[0mdebug[0m] [0m[0mPassed tests:[0m
 [0m[[0m[0mdebug[0m] [0m[0m	FuzzyLogicDSLTest[0m

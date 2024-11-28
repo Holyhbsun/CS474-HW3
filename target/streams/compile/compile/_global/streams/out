@@ -1,0 +1,9 @@
+[0m[[0m[33mwarn[0m] [0m[0mD:\CS474-HW3\src\main\scala\FuzzyLogicDSL.scala:320:63: Exhaustivity analysis reached max recursion depth, not all missing cases are reported.[0m
+[0m[[0m[33mwarn[0m] [0m[0m(Please try with scalac -Ypatmat-exhaust-depth 40 or -Ypatmat-exhaust-depth off.)[0m
+[0m[[0m[33mwarn[0m] [0m[0m    def evalOperation(op: FuzzyExpression): FuzzyExpression = op match {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                              ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mD:\CS474-HW3\src\main\scala\FuzzyLogicDSL.scala:377:114: Exhaustivity analysis reached max recursion depth, not all missing cases are reported.[0m
+[0m[[0m[33mwarn[0m] [0m[0m(Please try with scalac -Ypatmat-exhaust-depth 40 or -Ypatmat-exhaust-depth off.)[0m
+[0m[[0m[33mwarn[0m] [0m[0m  private def evaluateGateOperation(op: FuzzyExpression, scope: Map[String, FuzzyExpression]): FuzzyExpression = op match {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                                                                                 ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mtwo warnings found[0m

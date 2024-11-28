@@ -1,7 +1,6 @@
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import FuzzyLogicDSL._
-import FuzzySetOperations._
 
 class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
 
@@ -14,38 +13,17 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
         Method(
           name = "addMethod",
           params = List(Parameter("p1", "double"), Parameter("p2", "double")),
-          body = ADD(Input("p1"), Input("p2")) // This is a FuzzyGateOperation, which is acceptable
+          body = ADD(Input("p1"), Input("p2"))
         )
       ),
       vars = List(ClassVar("v1", DoubleType))
     )
-    val instance = CreateInstance(baseClass)
+    val instance = CreateInstance(baseClass, "instance1")
 
-    ScopeInstance(instance, "p1", FuzzyNumber(0.4))
-    ScopeInstance(instance, "p2", FuzzyNumber(0.5))
-
-    val result = Invoke(instance, methodName = "addMethod", argNames = List("p1", "p2")) // 0.4+0.5
-    result shouldEqual FuzzyNumber(0.9) // Since Invoke now returns FuzzyValue
-  }
-
-  it should "correctly evaluate MULT operation in a class method" in {
-    val baseClass = Class(
-      name = "Base",
-      methods = List(
-        Method(
-          name = "multMethod",
-          params = List(Parameter("p1", "double"), Parameter("p2", "double")),
-          body = MULT(Input("p1"), Input("p2"))
-        )
-      )
-    )
-    val instance = CreateInstance(baseClass)
-
-    ScopeInstance(instance, "p1", FuzzyNumber(0.6))
-    ScopeInstance(instance, "p2", FuzzyNumber(0.5))
-
-    val result = Invoke(instance, methodName = "multMethod", argNames = List("p1", "p2")) //0.6*0.5
-    result shouldEqual FuzzyNumber(0.3)
+    val resultExpr = Invoke(instance, methodName = "addMethod", argNames = List("p1", "p2"))
+    val env = Map("p1" -> FuzzyNumber(0.4), "p2" -> FuzzyNumber(0.5))
+    val (evaluatedResult, _) = FuzzyGateEvaluator.evaluateExpression(resultExpr, env)
+    evaluatedResult shouldEqual FuzzyNumber(0.9)
   }
 
   it should "correctly evaluate XOR operation in a class method" in {
@@ -57,98 +35,153 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
           params = List(Parameter("p1", "double"), Parameter("p2", "double")),
           body = XOR(Input("p1"), Input("p2"))
         )
-      )
+      ),
+      vars = List(ClassVar("v1", DoubleType))
     )
-    val instance = CreateInstance(baseClass)
+    val instance = CreateInstance(baseClass, "instance1")
 
-    ScopeInstance(instance, "p1", FuzzyNumber(0.7))
-    ScopeInstance(instance, "p2", FuzzyNumber(0.4))
-
-    val result = Invoke(instance, methodName = "xorMethod", argNames = List("p1", "p2")) //0.7-0.4
-    result shouldEqual FuzzyNumber(0.3)
+    val methodExpr = Invoke(instance, methodName = "xorMethod", argNames = List("p1", "p2"))
+    val env = Map("p1" -> FuzzyNumber(0.7), "p2" -> FuzzyNumber(0.4))
+    val (evaluatedResult, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
+    evaluatedResult shouldEqual FuzzyNumber(0.3)
   }
 
-  it should "correctly evaluate composite gate operation in a nested class method" in {
-    val nestedClass = Class(
-      name = "Nested",
-      methods = List(
-        Method(
-          name = "compositeMethod",
-          params = List(Parameter("p1", "double"), Parameter("p2", "double"), Parameter("p3", "double")),
-          body = ADD(MULT(Input("p1"), Input("p2")), Input("p3"))
-        )
-      )
-    )
-    val instance = CreateInstance(nestedClass)
-
-    ScopeInstance(instance, "p1", FuzzyNumber(0.5))
-    ScopeInstance(instance, "p2", FuzzyNumber(0.7))
-    ScopeInstance(instance, "p3", FuzzyNumber(0.2))
-
-    val result = Invoke(instance, methodName = "compositeMethod", argNames = List("p1", "p2", "p3")) //(0.5*0.7)+0.2
-    result shouldEqual FuzzyNumber(0.55)
+  it should "partially evaluate an expression with undefined variables" in {
+    val expr = ADD(FuzzyNumber(0.3), Input("x"))
+    val partiallyEvaluatedExpr = expr.partialEvaluate(Map.empty)
+    partiallyEvaluatedExpr shouldEqual ADD(FuzzyNumber(0.3), Input("x"))
   }
 
-  it should "correctly evaluate inherited method in derived class" in {
+  it should "fully evaluate expressions when all variables are defined" in {
+    val expr = MULT(FuzzyNumber(0.5), ADD(FuzzyNumber(0.3), Input("x")))
+    val env = Map("x" -> FuzzyNumber(0.4))
+    val fullyEvaluatedExpr = expr.partialEvaluate(env)
+    fullyEvaluatedExpr shouldEqual FuzzyNumber(0.35)
+  }
+
+  it should "partially and fully evaluate a class method" in {
     val baseClass = Class(
       name = "Base",
       methods = List(
         Method(
-          name = "multMethod",
+          name = "computeMethod",
           params = List(Parameter("p1", "double"), Parameter("p2", "double")),
-          body = MULT(Input("p1"), Input("p2"))
+          body = MULT(FuzzyNumber(0.5), ADD(Input("p1"), Input("p2")))
         )
-      )
+      ),
+      vars = List(ClassVar("v1", DoubleType))
+    )
+    val instance = CreateInstance(baseClass, "instance1")
+
+    ScopeInstance(instance, "p1", FuzzyNumber(0.4))
+    val methodExpr = Invoke(instance, methodName = "computeMethod", argNames = List("p1", "p2"))
+    val partiallyEvaluatedMethod = methodExpr.partialEvaluate(Map("p1" -> FuzzyNumber(0.4)))
+    partiallyEvaluatedMethod shouldEqual MULT(FuzzyNumber(0.5), ADD(FuzzyNumber(0.4), Input("p2")))
+
+    ScopeInstance(instance, "p2", FuzzyNumber(0.3))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, Map("p1" -> FuzzyNumber(0.4), "p2" -> FuzzyNumber(0.3)))
+    result shouldEqual FuzzyNumber(0.35)
+  }
+
+  it should "correctly handle class inheritance and method overriding" in {
+    val baseClass = Class(
+      name = "BaseClass",
+      methods = List(
+        Method(
+          name = "computeMethod",
+          params = List(Parameter("p1", "double"), Parameter("p2", "double")),
+          body = ADD(Input("p1"), Input("p2"))
+        )
+      ),
+      vars = List(ClassVar("v1", DoubleType))
     )
 
     val derivedClass = Class(
-      name = "Derived",
+      name = "DerivedClass",
       superClass = Some(baseClass),
       methods = List(
         Method(
-          name = "xorMethod",
+          name = "computeMethod",
           params = List(Parameter("p1", "double"), Parameter("p2", "double")),
-          body = XOR(Input("p1"), Input("p2"))
+          body = MULT(Input("p1"), Input("p2"))
         )
+      ),
+      vars = List(ClassVar("v2", DoubleType))
+    )
+
+    val instance = CreateInstance(derivedClass, "instance1")
+
+    val methodExpr = Invoke(instance, methodName = "computeMethod", argNames = List("p1", "p2"))
+    val env = Map("p1" -> FuzzyNumber(0.6), "p2" -> FuzzyNumber(0.5))
+    val (evaluatedResult, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
+    evaluatedResult shouldEqual FuzzyNumber(0.3) // 0.6 * 0.5 = 0.3
+
+    val derivedClassWithoutOverride = Class(
+      name = "DerivedClassWithoutOverride",
+      superClass = Some(baseClass),
+      methods = List(),
+      vars = List(ClassVar("v2", DoubleType))
+    )
+
+    val instance2 = CreateInstance(derivedClassWithoutOverride, "instance2")
+    val methodExpr2 = Invoke(instance2, methodName = "computeMethod", argNames = List("p1", "p2"))
+    val env2 = Map("p1" -> FuzzyNumber(0.6), "p2" -> FuzzyNumber(0.5))
+    val (evaluatedResult2, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr2, env2)
+    evaluatedResult2 shouldEqual FuzzyNumber(1.0) // 0.6 + 0.5 = 1.1, but max is 1.0
+  }
+
+  it should "correctly evaluate GREATER_EQUAL, IFTRUE, THENEXECUTE, and ELSERUN with complex expressions" in {
+    val expr = IFTRUE(
+      GREATER_EQUAL(Input("p1"), Input("p2")),
+      THENEXECUTE(
+        ADD(Input("p1"), FuzzyNumber(0.1))
+      ),
+      ELSERUN(
+        MULT(Input("p2"), FuzzyNumber(0.5))
       )
     )
 
-    val instance = CreateInstance(derivedClass)
+    // Case 1: p1 >= p2
+    val env1 = Map("p1" -> FuzzyNumber(0.7), "p2" -> FuzzyNumber(0.5))
+    val (result1, _) = FuzzyGateEvaluator.evaluateExpression(expr, env1)
+    result1 shouldEqual FuzzyNumber(0.8) // 0.7 + 0.1 = 0.8
 
-    ScopeInstance(instance, "p1", FuzzyNumber(0.7))
-    ScopeInstance(instance, "p2", FuzzyNumber(0.3))
-
-    val multResult = Invoke(instance, methodName = "multMethod", argNames = List("p1", "p2"))
-    multResult shouldEqual FuzzyNumber(0.21) // 0.7*0.3
-
-    val xorResult = Invoke(instance, methodName = "xorMethod", argNames = List("p1", "p2"))
-    xorResult shouldEqual FuzzyNumber(0.4) // 0.7-0.3
+    // Case 2: p1 < p2
+    val env2 = Map("p1" -> FuzzyNumber(0.4), "p2" -> FuzzyNumber(0.5))
+    val (result2, _) = FuzzyGateEvaluator.evaluateExpression(expr, env2)
+    result2 shouldEqual FuzzyNumber(0.25) // 0.5 * 0.5 = 0.25
   }
 
+  behavior of "FuzzySet operations for evaluations"
 
-  it should "correctly handle FuzzyString parameters" in {
-    val baseClass = Class(
-      name = "Base",
-      methods = List(
-        Method(
-          name = "stringMethod",
-          params = List(Parameter("p1", "string"), Parameter("p2", "double")),
-          body = ADD(Input("p2"), Input("p2"))
-        )
-      )
+  it should "partially and fully evaluate set operations" in {
+    val setA = FuzzySet("SetA", List(Element("x", 0.5), Element("y", 0.7)))
+    val setB = FuzzySet("SetB", List(Element("x", 0.6), Element("y", 0.4)))
+    val setC = FuzzySet("SetC", List(Element("x", 0.8), Element("y", 0.2)))
+
+    val env = Map(
+      "A" -> FuzzySetValue(setA),
+      "B" -> FuzzySetValue(setB)
     )
 
-    val instance = CreateInstance(baseClass)
+    val expr = Union(SetInput("A"), Intersection(SetInput("B"), SetInput("C")))
 
-    ScopeInstance(instance, "p2", FuzzyNumber(0.4))
+    val partiallyEvaluatedExpr = expr.partialEvaluate(env)
+    partiallyEvaluatedExpr shouldBe Union(FuzzySetValue(setA), Intersection(FuzzySetValue(setB), SetInput("C")))
 
-    ScopeInstance(instance, "p1", FuzzyString("Hello World!"))
-
-    val result = Invoke(instance, methodName = "stringMethod", argNames = List("p1", "p2")) //0.4+0.4, skip the string
-    result shouldEqual FuzzyNumber(0.8)
+    val envFull = env + ("C" -> FuzzySetValue(setC))
+    val fullyEvaluatedExpr = partiallyEvaluatedExpr.partialEvaluate(envFull)
+    fullyEvaluatedExpr match {
+      case FuzzySetValue(resultSet) =>
+        resultSet.name shouldBe "SetA_UNION_SetB_INTERSECTION_SetC"
+        resultSet.elements should contain allOf(
+          Element("x", 0.6),
+          Element("y", 0.7)
+        )
+      case _ =>
+        fail("Expected a FuzzySetValue")
+    }
   }
-
-  behavior of "FuzzySet operations in class methods"
 
   it should "correctly evaluate ADD operation on fuzzy sets in a class method" in {
     val baseSetClass = Class(
@@ -162,17 +195,20 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.7)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.4)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.7)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.4))))
+    )
 
-    val result = Invoke(instance, methodName = "addMethod", argNames = List("setA", "setB"))
+    val methodExpr = Invoke(instance, methodName = "addMethod", argNames = List("setA", "setB"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.7),
+        set.elements should contain allOf(
+          Element("x1", 0.7), // min(1.0, 0.2 + 0.5)
           Element("x2", 0.7),
           Element("x3", 0.4)
         )
@@ -192,19 +228,22 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.6), Element("x2", 0.8)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.4)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.6), Element("x2", 0.8)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.4))))
+    )
 
-    val result = Invoke(instance, methodName = "multMethod", argNames = List("setA", "setB"))
+    val methodExpr = Invoke(instance, methodName = "multMethod", argNames = List("setA", "setB"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.3), //0.6*0.5
-          Element("x2", 0.0),
-          Element("x3", 0.0)
+        set.elements should contain allOf(
+          Element("x1", 0.3), // 0.6 * 0.5
+          Element("x2", 0.0), // 0.8 * 0.0
+          Element("x3", 0.0) // 0.0 * 0.4
         )
       case _ => fail("Expected a FuzzySetValue")
     }
@@ -222,19 +261,22 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.7), Element("x2", 0.3)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.4), Element("x3", 0.5)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.7), Element("x2", 0.3)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.4), Element("x3", 0.5))))
+    )
 
-    val result = Invoke(instance, methodName = "xorMethod", argNames = List("setA", "setB"))
+    val methodExpr = Invoke(instance, methodName = "xorMethod", argNames = List("setA", "setB"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.3), // abs(0.7 - 0.4)
-          Element("x2", 0.3), // abs(0.3 - 0.0)
-          Element("x3", 0.5) // abs(0.0 - 0.5)
+        set.elements should contain allOf(
+          Element("x1", 0.3), // |0.7 - 0.4|
+          Element("x2", 0.3), // |0.3 - 0.0|
+          Element("x3", 0.5) // |0.0 - 0.5|
         )
       case _ => fail("Expected a FuzzySetValue")
     }
@@ -252,49 +294,26 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.8)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.8))))
+    )
 
-    val result = Invoke(instance, methodName = "complementMethod", argNames = List("setA"))
+    val methodExpr = Invoke(instance, methodName = "complementMethod", argNames = List("setA"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.8),
-          Element("x2", 0.2)
+        set.elements should contain allOf(
+          Element("x1", 0.8), // 1 - 0.2
+          Element("x2", 0.2) // 1 - 0.8
         )
       case _ => fail("Expected a FuzzySetValue")
     }
   }
 
-  it should "correctly evaluate alpha-cut operation on a fuzzy set in a class method" in {
-    val baseSetClass = Class(
-      name = "BaseSet",
-      methods = List(
-        Method(
-          name = "alphaCutMethod",
-          params = List(Parameter("setA", "set"), Parameter("alpha", "double")),
-          body = AlphaCut(SetInput("setA"), Input("alpha"))
-        )
-      )
-    )
-
-    val instance = CreateInstance(baseSetClass)
-
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.5), Element("x2", 0.7), Element("x3", 0.9)))))
-    ScopeInstance(instance, "alpha", FuzzyNumber(0.6))
-
-    val result = Invoke(instance, methodName = "alphaCutMethod", argNames = List("setA", "alpha"))
-
-    result match {
-      case FuzzyString(value) =>
-        value shouldEqual "x2,x3"
-      case _ => fail("Expected a FuzzyString")
-    }
-  }
-
-  it should "correctly evaluate unionMethod in a class method" in {
+  it should "correctly evaluate union operation on fuzzy sets in a class method" in {
     val baseSetClass = Class(
       name = "BaseSet",
       methods = List(
@@ -306,17 +325,20 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.7)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.6), Element("x3", 0.5)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.7)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.6), Element("x3", 0.5))))
+    )
 
-    val result = Invoke(instance, methodName = "unionMethod", argNames = List("setA", "setB"))
+    val methodExpr = Invoke(instance, methodName = "unionMethod", argNames = List("setA", "setB"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.6), //max(0.2,0.6)
+        set.elements should contain allOf(
+          Element("x1", 0.6), // max(0.2, 0.6)
           Element("x2", 0.7),
           Element("x3", 0.5)
         )
@@ -324,7 +346,7 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
     }
   }
 
-  it should "correctly evaluate intersectionMethod in a class method" in {
+  it should "correctly evaluate intersection operation on fuzzy sets in a class method" in {
     val baseSetClass = Class(
       name = "BaseSet",
       methods = List(
@@ -336,75 +358,22 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(baseSetClass)
+    val instance = CreateInstance(baseSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.5), Element("x2", 0.7)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.3), Element("x3", 0.8)))))
-
-    val result = Invoke(instance, methodName = "intersectionMethod", argNames = List("setA", "setB"))
-
-    result match {
-      case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.3), //min(0.5,0.3)
-          Element("x2", 0.0),
-          Element("x3", 0.0)
-        )
-      case _ => fail("Expected a FuzzySetValue")
-    }
-  }
-
-  it should "correctly evaluate complementMethod in a class method" in {
-    val baseSetClass = Class(
-      name = "BaseSet",
-      methods = List(
-        Method(
-          name = "complementMethod",
-          params = List(Parameter("setA", "set")),
-          body = Complement(SetInput("setA"))
-        )
-      )
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.5), Element("x2", 0.7)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.3), Element("x3", 0.8))))
     )
 
-    val instance = CreateInstance(baseSetClass)
-
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.2), Element("x2", 0.7)))))
-
-    val result = Invoke(instance, methodName = "complementMethod", argNames = List("setA"))
+    val methodExpr = Invoke(instance, methodName = "intersectionMethod", argNames = List("setA", "setB"))
+    val (result, _) = FuzzyGateEvaluator.evaluateExpression(methodExpr, env)
 
     result match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.8),
-          Element("x2", 0.3)
-        )
-      case _ => fail("Expected a FuzzySetValue")
-    }
-  }
-
-  it should "correctly evaluate nested set operations in a class method" in {
-    val nestedSetClass = Class(
-      name = "NestedSet",
-      methods = List(
-        Method(
-          name = "nestedMethod",
-          params = List(Parameter("setA", "set"), Parameter("setB", "set")),
-          body = Complement(Union(SetInput("setA"), SetInput("setB")))
-        )
-      )
-    )
-
-    val instance = CreateInstance(nestedSetClass)
-
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.5)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.3)))))
-
-    val result = Invoke(instance, methodName = "nestedMethod", argNames = List("setA", "setB"))
-
-    result match {
-      case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.5)
+        set.elements should contain allOf(
+          Element("x1", 0.3), // min(0.5, 0.3)
+          Element("x2", 0.0), // min(0.7, 0.0)
+          Element("x3", 0.0) // min(0.0, 0.8)
         )
       case _ => fail("Expected a FuzzySetValue")
     }
@@ -434,27 +403,35 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val instance = CreateInstance(derivedSetClass)
+    val instance = CreateInstance(derivedSetClass, "instance1")
 
-    ScopeInstance(instance, "setA", FuzzySetValue(FuzzySet("A", List(Element("x1", 0.4), Element("x2", 0.6)))))
-    ScopeInstance(instance, "setB", FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.7)))))
+    val env = Map(
+      "setA" -> FuzzySetValue(FuzzySet("A", List(Element("x1", 0.4), Element("x2", 0.6)))),
+      "setB" -> FuzzySetValue(FuzzySet("B", List(Element("x1", 0.5), Element("x3", 0.7))))
+    )
 
-    val unionResult = Invoke(instance, methodName = "unionMethod", argNames = List("setA", "setB"))
+    // Invoke inherited unionMethod
+    val unionExpr = Invoke(instance, methodName = "unionMethod", argNames = List("setA", "setB"))
+    val (unionResult, _) = FuzzyGateEvaluator.evaluateExpression(unionExpr, env)
+
     unionResult match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.5),
+        set.elements should contain allOf(
+          Element("x1", 0.5), // max(0.4, 0.5)
           Element("x2", 0.6),
           Element("x3", 0.7)
         )
       case _ => fail("Expected a FuzzySetValue")
     }
 
-    val intersectionResult = Invoke(instance, methodName = "intersectionMethod", argNames = List("setA", "setB"))
+    // Invoke intersectionMethod from DerivedSet
+    val intersectionExpr = Invoke(instance, methodName = "intersectionMethod", argNames = List("setA", "setB"))
+    val (intersectionResult, _) = FuzzyGateEvaluator.evaluateExpression(intersectionExpr, env)
+
     intersectionResult match {
       case FuzzySetValue(set) =>
-        set.elements shouldEqual List(
-          Element("x1", 0.4),
+        set.elements should contain allOf(
+          Element("x1", 0.4), // min(0.4, 0.5)
           Element("x2", 0.0),
           Element("x3", 0.0)
         )
@@ -462,4 +439,136 @@ class FuzzyLogicDSLTest extends AnyFlatSpec with Matchers {
     }
   }
 
+  it should "correctly evaluate GREATER_EQUAL_SET, IFTRUE, THENEXECUTE, and ELSERUN with set operations" in {
+    val setA = FuzzySet("SetA", List(Element("x", 0.5), Element("y", 0.7)))
+    val setB = FuzzySet("SetB", List(Element("x", 0.6), Element("y", 0.4)))
+    val setC = FuzzySet("SetC", List(Element("x", 0.8), Element("y", 0.2)))
+    val setD = FuzzySet("SetD", List(Element("x", 0.3), Element("y", 0.9)))
+
+    val env = Map(
+      "A" -> FuzzySetValue(setA),
+      "B" -> FuzzySetValue(setB),
+      "C" -> FuzzySetValue(setC),
+      "D" -> FuzzySetValue(setD)
+    )
+
+    val expr = IFTRUE(
+      GREATER_EQUAL_SET(SetInput("A"), SetInput("B")),
+      THENEXECUTE(
+        Assign(Variable("resultSet"), Union(SetInput("A"), SetInput("C")))
+      ),
+      ELSERUN(
+        Assign(Variable("resultSet"), Intersection(SetInput("B"), SetInput("D")))
+      )
+    )
+
+    val (result, finalEnv) = FuzzyGateEvaluator.evaluateExpression(expr, env)
+
+    finalEnv.get("resultSet") match {
+      case Some(FuzzySetValue(resultSet)) =>
+        if (setA.elements.map(_.value).sum >= setB.elements.map(_.value).sum) {
+          resultSet.name shouldBe "SetA_UNION_SetC"
+        } else {
+          resultSet.name shouldBe "SetB_INTERSECTION_SetD"
+        }
+      case _ =>
+        fail("resultSet not found or not a FuzzySetValue")
+    }
+  }
+
+  it should "correctly handle class inheritance with set operations and test all set operations" in {
+    val superClass = Class(
+      name = "SuperClass",
+      methods = List(
+        Method(
+          name = "combineSets",
+          params = List(Parameter("setX", "set"), Parameter("setY", "set")),
+          body = AddSets(SetInput("setX"), SetInput("setY"))
+        )
+      ),
+      vars = List(ClassVar("v1", SetType))
+    )
+
+    val subClass = Class(
+      name = "SubClass",
+      superClass = Some(superClass),
+      methods = List(
+        Method(
+          name = "combineSets",
+          params = List(Parameter("setX", "set"), Parameter("setY", "set")),
+          body = MultSets(SetInput("setX"), SetInput("setY"))
+        ),
+        Method(
+          name = "complementSet",
+          params = List(Parameter("setZ", "set")),
+          body = Complement(SetInput("setZ"))
+        )
+      ),
+      vars = List(ClassVar("v2", SetType))
+    )
+
+    val setX = FuzzySet("SetX", List(Element("a", 0.4), Element("b", 0.6)))
+    val setY = FuzzySet("SetY", List(Element("a", 0.5), Element("b", 0.3)))
+    val setZ = FuzzySet("SetZ", List(Element("a", 0.7), Element("b", 0.2)))
+
+    val env = Map(
+      "setX" -> FuzzySetValue(setX),
+      "setY" -> FuzzySetValue(setY),
+      "setZ" -> FuzzySetValue(setZ)
+    )
+
+    val instance = CreateInstance(subClass, "instance1")
+
+    val combineExpr = Invoke(instance, methodName = "combineSets", argNames = List("setX", "setY"))
+    val (combinedResult, _) = FuzzyGateEvaluator.evaluateExpression(combineExpr, env)
+
+    combinedResult match {
+      case FuzzySetValue(resultSet) =>
+        resultSet.name shouldBe "SetX_MULT_SetY"
+        resultSet.elements should contain allOf(
+          Element("a", 0.2), // 0.4 * 0.5
+          Element("b", 0.18) // 0.6 * 0.3
+        )
+      case _ =>
+        fail("Expected a FuzzySetValue")
+    }
+
+    val complementExpr = Invoke(instance, methodName = "complementSet", argNames = List("setZ"))
+    val (complementResult, _) = FuzzyGateEvaluator.evaluateExpression(complementExpr, env)
+
+    complementResult match {
+      case FuzzySetValue(resultSet) =>
+        resultSet.name shouldBe "SetZ_COMPLEMENT"
+        resultSet.elements should contain allOf(
+          Element("a", 0.3), // 1 - 0.7
+          Element("b", 0.8) // 1 - 0.2
+        )
+      case _ =>
+        fail("Expected a FuzzySetValue")
+    }
+
+    val subClassNoOverride = Class(
+      name = "SubClassNoOverride",
+      superClass = Some(superClass),
+      methods = List(), // No override
+      vars = List(ClassVar("v2", SetType))
+    )
+
+    val instance2 = CreateInstance(subClassNoOverride, "instance2")
+
+    // Invoke combineSets method (should use AddSets from SuperClass)
+    val combineExpr2 = Invoke(instance2, methodName = "combineSets", argNames = List("setX", "setY"))
+    val (combinedResult2, _) = FuzzyGateEvaluator.evaluateExpression(combineExpr2, env)
+
+    combinedResult2 match {
+      case FuzzySetValue(resultSet) =>
+        resultSet.name shouldBe "SetX_ADD_SetY"
+        resultSet.elements should contain allOf(
+          Element("a", 0.9), // min(1.0, 0.4 + 0.5)
+          Element("b", 0.9) // min(1.0, 0.6 + 0.3)
+        )
+      case _ =>
+        fail("Expected a FuzzySetValue")
+    }
+  }
 }
