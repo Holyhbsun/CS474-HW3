@@ -702,19 +702,21 @@ case class FuzzySetClass(
 case class FuzzySetVar(name: String, varType: VarType, elements: List[Element]) extends FuzzyClassOperation
 
 
+import scala.collection.mutable
+
 object FuzzyLogicDSL {
-  var gates: Map[String, FuzzyGate] = Map()
-  var inputScope: Map[String, Map[String, FuzzyExpression]] = Map()
-  var instanceScope: Map[String, Map[String, FuzzyExpression]] = Map()
-  var classInstances: Map[String, CreateNew] = Map()
+  val gates: mutable.Map[String, FuzzyGate] = mutable.Map()
+  val inputScope: mutable.Map[String, mutable.Map[String, FuzzyExpression]] = mutable.Map()
+  val instanceScope: mutable.Map[String, mutable.Map[String, FuzzyExpression]] = mutable.Map()
+  val classInstances: mutable.Map[String, CreateNew] = mutable.Map()
 
   def AssignGate(gate: FuzzyGate): Unit = {
     gates += (gate.name -> gate)
   }
 
   def AssignInput(gateName: String, input: Input, value: FuzzyExpression): Unit = {
-    val currentScope = inputScope.getOrElse(gateName, Map())
-    inputScope += (gateName -> (currentScope + (input.name -> value)))
+    val currentScope = inputScope.getOrElseUpdate(gateName, mutable.Map())
+    currentScope += (input.name -> value)
   }
 
   def Scope(gate: FuzzyGate, inputAssignment: (Input, Double)): Unit = {
@@ -723,14 +725,14 @@ object FuzzyLogicDSL {
 
   def ScopeInstance(instance: CreateNew, variable: String, value: FuzzyExpression): Unit = {
     val instanceName = instance.clazz.name
-    val currentScope = instanceScope.getOrElse(instanceName, Map())
-    instanceScope += (instanceName -> (currentScope + (variable -> value)))
+    val currentScope = instanceScope.getOrElseUpdate(instanceName, mutable.Map())
+    currentScope += (variable -> value)
   }
 
   def TestGate(gateName: String, expectedResult: Double): Boolean = {
     val gate = gates.getOrElse(gateName, throw new IllegalArgumentException(s"Gate $gateName not found"))
     val inputValues = inputScope.getOrElse(gateName, throw new IllegalArgumentException(s"Input values for $gateName not found"))
-    val result = FuzzyGateEvaluator.evaluate(gate, inputValues)
+    val result = FuzzyGateEvaluator.evaluate(gate, inputValues.toMap)
     result match {
       case FuzzyNumber(value) => value == expectedResult
       case _ => false
